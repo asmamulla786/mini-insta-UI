@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChatApi } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
@@ -6,6 +6,7 @@ import type { ChatSummary, MessageResponse, SendMessageResponse } from '../types
 import { TextArea } from '../components/ui/TextArea';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
+import { Input } from '../components/ui/Input';
 
 type RouteParams = {
   username: string;
@@ -20,8 +21,11 @@ export const ChatPage = () => {
   const [messages, setMessages] = useState<MessageResponse[]>([]);
   const [chatId, setChatId] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState('');
+  const [newChatUsername, setNewChatUsername] = useState('');
+  const [newChatMessage, setNewChatMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isStartingChat, setIsStartingChat] = useState(false);
   const [error, setError] = useState('');
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -232,10 +236,68 @@ export const ChatPage = () => {
               )}
             </>
           ) : (
-            <EmptyState
-              title="No chat selected"
-              description="Choose a conversation from the list or start a new one from a profile."
-            />
+            <div className="flex h-full flex-col gap-4">
+              <EmptyState
+                title="No chat selected"
+                description="Choose a conversation from the list or start a new one."
+              />
+
+              <form
+                className="mt-2 space-y-3 rounded-2xl border border-slate-800 bg-slate-950/80 p-4"
+                onSubmit={async (event: FormEvent<HTMLFormElement>) => {
+                  event.preventDefault();
+                  const target = newChatUsername.trim();
+                  const content = newChatMessage.trim();
+                  if (!target || !content) return;
+                  setIsStartingChat(true);
+                  setError('');
+                  try {
+                    const response: SendMessageResponse = await ChatApi.sendMessage(
+                      target,
+                      { content }
+                    );
+                    setNewChatUsername('');
+                    setNewChatMessage('');
+                    // Refresh chats and navigate into the new conversation
+                    const chatsList = await ChatApi.getChats();
+                    setChats(chatsList);
+                    setChatId(response.chatId);
+                    navigate(`/chats/${target}`);
+                  } catch {
+                    setError('Unable to start chat. Please check the username.');
+                  } finally {
+                    setIsStartingChat(false);
+                  }
+                }}
+              >
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                  Start a new chat
+                </p>
+                <Input
+                  name="username"
+                  placeholder="Username (e.g. john)"
+                  value={newChatUsername}
+                  onChange={(e) => setNewChatUsername(e.target.value)}
+                  className="bg-slate-900"
+                />
+                <TextArea
+                  rows={2}
+                  placeholder="Your first message..."
+                  value={newChatMessage}
+                  onChange={(e) => setNewChatMessage(e.target.value)}
+                  className="resize-none"
+                />
+                <div className="flex justify-end">
+                  <Button
+                    type="submit"
+                    disabled={!newChatUsername.trim() || !newChatMessage.trim()}
+                    isLoading={isStartingChat}
+                  >
+                    Send message
+                  </Button>
+                </div>
+              </form>
+            </div>
           )}
         </div>
       </section>
