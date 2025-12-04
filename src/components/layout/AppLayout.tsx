@@ -6,6 +6,7 @@ import { useAuth } from '../../hooks/useAuth';
 
 const navLinks = [
   { to: '/', label: 'Feed' },
+  { to: '/chats', label: 'Messages' },
   { to: '/profile', label: 'Profile' },
   { to: '/connections', label: 'Connections' }
 ];

@@ -78,3 +78,28 @@ export type ApiError = {
   status?: number;
 };
 
+export type ChatSummary = {
+  chatId: number;
+  username: string;
+  profilePicUrl?: string;
+  lastMessage: string;
+};
+
+export type SendMessagePayload = {
+  content: string;
+};
+
+export type SendMessageResponse = {
+  messageId: number;
+  content: string;
+  chatId: number;
+  sentAt: string;
+  receiver: string;
+};
+
+export type MessageResponse = {
+  content: string;
+  sentAt: string;
+  sender: string;
+};
+

@@ -1,4 +1,5 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useEffect, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
@@ -16,11 +17,21 @@ export const LoginPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState('');
   const [showAccountNotFoundModal, setShowAccountNotFoundModal] = useState(false);
+  const shouldShowModalRef = useRef(false);
+
+  useEffect(() => {
+    console.log('Modal state updated:', showAccountNotFoundModal);
+    // If ref says we should show modal but state is false, update it
+    if (shouldShowModalRef.current && !showAccountNotFoundModal) {
+      console.log('Ref says show modal, but state is false. Setting to true...');
+      setShowAccountNotFoundModal(true);
+    }
+  }, [showAccountNotFoundModal]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setGeneralError('');
-    setShowAccountNotFoundModal(false);
+    // Don't reset modal here - only reset when we actually need to
 
     const nextErrors: typeof errors = {};
     if (!form.username.trim()) nextErrors.username = 'Username is required';
@@ -32,13 +43,44 @@ export const LoginPage = () => {
     try {
       setSubmitting(true);
       await login(form);
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 403) {
-        setShowAccountNotFoundModal(true);
-      } else {
-        setGeneralError('Invalid credentials. Please try again.');
-      }
+    } catch (error: unknown) {
       setSubmitting(false);
+      
+      // Check for 403 or 404 status code (user/account not found)
+      let status: number | undefined;
+      
+      if (axios.isAxiosError(error)) {
+        status = error.response?.status;
+        console.log('Error status:', status, 'Error:', error);
+      } else if (error && typeof error === 'object' && 'response' in error) {
+        const err = error as { response?: { status?: number }; status?: number };
+        status = err.response?.status || err.status;
+        console.log('Non-axios error status:', status);
+      }
+      
+      console.log('Checking status:', status, 'Should show modal:', status === 403 || status === 404);
+      
+      // Show modal for 403 (Forbidden) or 404 (Not Found) - both indicate account doesn't exist
+      if (status === 403 || status === 404) {
+        console.log('Setting modal to true');
+        shouldShowModalRef.current = true;
+        // Use flushSync to force immediate state update
+        flushSync(() => {
+          setShowAccountNotFoundModal(true);
+        });
+        console.log('After flushSync - modal should be true');
+        // Also set it again in next tick as backup
+        setTimeout(() => {
+          if (shouldShowModalRef.current) {
+            setShowAccountNotFoundModal(true);
+          }
+        }, 10);
+      } else {
+        console.log('Setting general error instead');
+        shouldShowModalRef.current = false;
+        setGeneralError('Invalid credentials. Please try again.');
+        setShowAccountNotFoundModal(false);
+      }
     }
   };
 
@@ -96,9 +138,13 @@ export const LoginPage = () => {
       </div>
 
       <Modal
-        open={showAccountNotFoundModal}
+        open={showAccountNotFoundModal || shouldShowModalRef.current}
         title="Account Not Found"
-        onClose={() => setShowAccountNotFoundModal(false)}
+        onClose={() => {
+          console.log('Closing modal');
+          shouldShowModalRef.current = false;
+          setShowAccountNotFoundModal(false);
+        }}
       >
         <div className="space-y-4">
           <p className="text-slate-300">

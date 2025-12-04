@@ -1,6 +1,7 @@
 import apiClient from './http';
 import type {
   AuthResponse,
+  ChatSummary,
   Comment,
   CommentPayload,
   FeedItem,
@@ -71,5 +72,19 @@ export const FollowApi = {
 
 export const FeedApi = {
   list: () => unwrap<FeedItem[]>(apiClient.get('/feed'))
+};
+
+export const ChatApi = {
+  getChats: () => unwrap<ChatSummary[]>(apiClient.get('/chats')),
+  sendMessage: (username: string, payload: { content: string }) =>
+    unwrap<import('../types/api').SendMessageResponse>(
+      apiClient.post(`/chats/${username}/messages`, payload)
+    ),
+  getMessages: (username: string) =>
+    unwrap<import('../types/api').MessageResponse[]>(
+      apiClient.get(`/chats/${username}/messages`)
+    ),
+  markSeen: (chatId: number) =>
+    apiClient.patch(`/chats/${chatId}/seen`)
 };
 

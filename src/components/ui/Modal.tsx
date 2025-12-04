@@ -8,11 +8,18 @@ type ModalProps = {
 };
 
 export const Modal = ({ open, title, onClose, children }: ModalProps) => {
+  console.log('Modal component render - open:', open, 'title:', title);
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60">
-      <div className="glass-panel w-full max-w-lg p-6 shadow-2xl">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      onClick={onClose}
+    >
+      <div 
+        className="glass-panel w-full max-w-lg p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="mb-4 flex items-center justify-between">
           {title && (
             <h2 className="text-lg font-semibold text-white">{title}</h2>

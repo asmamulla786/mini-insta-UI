@@ -10,6 +10,7 @@ import { NotFoundPage } from '../pages/NotFoundPage';
 import { AppLayout } from '../components/layout/AppLayout';
 import { UserDetailPage } from '../pages/UserDetailPage';
 import { FeedPage } from '../pages/FeedPage';
+import { ChatPage } from '../pages/ChatPage';
 
 const AppRoutes = () => (
   <Routes>
@@ -23,8 +24,10 @@ const AppRoutes = () => (
         <Route path="/" element={<FeedPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/chats" element={<ChatPage />} />
         <Route path="/connections" element={<ConnectionsPage />} />
         <Route path="/users/:username" element={<UserDetailPage />} />
+        <Route path="/chats/:username" element={<ChatPage />} />
       </Route>
     </Route>
 
