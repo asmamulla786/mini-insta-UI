@@ -2,6 +2,7 @@
   "compilerOptions": {
     "baseUrl": "./src",
     "composite": true,
+    "target": "esnext",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
